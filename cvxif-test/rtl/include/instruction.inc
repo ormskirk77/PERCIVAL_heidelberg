@@ -1,0 +1,1 @@
+localparam ADD_OP = 7'b0000000;
