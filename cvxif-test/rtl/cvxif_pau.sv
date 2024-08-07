@@ -15,7 +15,7 @@
 // positions and don't need to be considered here.
 `timescale 1ns/1ns
 
-module cvxif_complex (
+module cvxif_pau (
     input         clk,
     input         rst,
     input         issue_valid,
@@ -38,12 +38,14 @@ module cvxif_complex (
     wire [31:0] c;
 
     `include "instruction.inc"
-    complex u_complex (
-        .op(op),
-        .a(a),
-        .b(b),
-        .c(c)
-    );
+    posit_add u_posit_add (
+        .in1(16'b0),
+        .in2(16'b0),
+        .start(start),
+        .out(out),
+        .inf(inf),
+        .zero(zero),
+        .done(done));
 
     logic match_instruction;
     assign match_instruction = (issue_req_instr[6:0] == 7'b1111011) &&
@@ -56,6 +58,7 @@ module cvxif_complex (
     typedef enum logic [1:0] {
         STATE_IDLE,
         STATE_WAITREGS,
+        STATE_WAITPAU,
         STATE_DONE
     } state_t;
 
@@ -96,10 +99,13 @@ module cvxif_complex (
                 if (register_valid && (register_rs_valid == (op ? 2'b01 : 2'b11))) begin
                     next_a = register_rs[0];
                     next_b = register_rs[1];
-                    next_state = STATE_DONE;
+                    next_state = STATE_WAITPAU;
                 end
             end
 
+            STATE_WAITPAU: begin
+            
+            end
             STATE_DONE: begin
                 result_valid = 1'b1;
                 if (result_ready) begin
