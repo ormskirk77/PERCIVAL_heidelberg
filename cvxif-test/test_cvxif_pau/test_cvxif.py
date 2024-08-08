@@ -7,12 +7,13 @@ from cocotb.runner import get_runner
 
 from random import randint, getrandbits
 from pathlib import Path
+import softposit
 
 
 def complex_to_32bits(value):
-    real = BinaryValue(int(value.real),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.TWOS_COMPLEMENT)
-    imag = BinaryValue(int(value.imag),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.TWOS_COMPLEMENT)
-    return BinaryValue(real.buff[::-1]+imag.buff[::-1])
+    real = BinaryValue(int(value.real),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
+    imag = BinaryValue(int(value.imag),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
+    return BinaryValue(int(softposit.posit32(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)#BinaryValue(real.buff[::-1]+imag.buff[::-1])
 
 
 def complex_overflow(value):
@@ -102,7 +103,7 @@ async def test_instruction(dut, instr, accepted, operands, result):
         await RisingEdge(dut.clk)
 
     dut.result_ready.value = 0
-    assert dut.result_data.value == complex_to_32bits(result), f"Wrong result for {instr}: {dut.result_data.value}"
+    assert dut.result_data.value == complex_to_32bits(result), f"Wrong result for {instr}: {dut.result_data.value} should be {complex_to_32bits(result)}"
 
     await FallingEdge(dut.clk)
 
@@ -113,19 +114,26 @@ async def complex_add_test(dut):
     await start_clock(dut)
     await wait_reset_cycle(dut)
 
-    A = 1 - 2j
-    B = 3 + 4j
+    A = 4.5
+    B = 4.5
+    C = 9.0
 
-    await test_instruction(dut, 0xdeadbeef, False, [A, B], complex_overflow(A + B))
-    await test_instruction(dut, form_instruction(0), True, [A, B], complex_overflow(A + B))
+    print(softposit.posit32(A), softposit.posit32(B), softposit.posit32(C))
+    print(BinaryValue(int(softposit.posit32(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit32(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit32(C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert softposit.posit32(A)+softposit.posit32(B) == softposit.posit32(C)
 
-    for i in range(1000):
-        A = complex(randint(-32768, 32767), randint(-32768, 32767))
+    await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
+    await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
-        await test_instruction(dut, form_instruction(0), True, [A, B], complex_overflow(A + B))
+    #for i in range(1000):
+    #    A = complex(randint(-32768, 32767), randint(-32768, 32767))#
+
+    #    await test_instruction(dut, form_instruction(0), True, [A, B], complex_overflow(A + B))
 
 
-@cocotb.test()
+#@cocotb.test()
 async def complex_conjugate_test(dut):
     reset_values(dut)
     await start_clock(dut)

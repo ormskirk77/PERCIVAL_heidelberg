@@ -33,24 +33,49 @@ module cvxif_pau (
     output [31:0] result_data
 );
 
+    `include "pau.inc"
     reg op, next_op;
-    reg [31:0] a, b, next_a, next_b;
-    wire [31:0] c;
+    reg [PAU_N-1:0] a, b, next_a, next_b;
+    wire [PAU_N-1:0] c;
+    reg start;
+    wire done;
+    reg [COUNTER_LEN-1:0] pau_wait_counter, next_pau_wait_counter;
 
-    `include "instruction.inc"
-    posit_add u_posit_add (
-        .in1(16'b0),
-        .in2(16'b0),
+    posit_add #(.N(PAU_N), .es(PAU_ES)) u_posit_add (
+        .in1(a),
+        .in2(b),
         .start(start),
-        .out(out),
-        .inf(inf),
-        .zero(zero),
+        .out(c),
+        .inf(),
+        .zero(),
         .done(done));
 
+    posit_mult #(.N(PAU_N), .es(PAU_ES)) u_posit_mult (
+        .in1(a),
+        .in2(b),
+        .start(start),
+        .out(),
+        .inf(),
+        .zero(),
+        .done(done));
+
+    posit_div #(.N(PAU_N), .es(PAU_ES)) u_posit_div (
+        .in1(a),
+        .in2(b),
+        .start(start),
+        .out(),
+        .inf(),
+        .zero(),
+        .done(done));
+
+    `include "instruction.inc"
     logic match_instruction;
     assign match_instruction = (issue_req_instr[6:0] == 7'b1111011) &&
                                 (issue_req_instr[14:13] == 2'b00) &&
-                                (issue_req_instr[31:25] == ADD_OP);
+                                ((issue_req_instr[31:25] == ADD_OP) ||
+                                (issue_req_instr[31:25] == SUB_OP) ||
+                                (issue_req_instr[31:25] == MUL_OP) ||
+                                (issue_req_instr[31:25] == DIV_OP));
 
     assign issue_resp_writeback = 1'b1;
     assign result_data = c;
@@ -68,19 +93,22 @@ module cvxif_pau (
     always_ff @(posedge clk) begin
         if (rst) begin
             current_state <= STATE_IDLE;
+            pau_wait_counter <= 0;
         end else begin
             current_state <= next_state;
             op <= next_op;
             a <= next_a;
             b <= next_b;
+            pau_wait_counter <= next_pau_wait_counter;
         end
     end
 
-    always_comb begin
+    always @(*) begin
         next_state = current_state;
         next_op = op;
         next_a = a;
         next_b = b;
+        next_pau_wait_counter = pau_wait_counter;
         issue_ready = 1'b0;
         issue_resp_accept = 1'b0;
 
@@ -99,13 +127,20 @@ module cvxif_pau (
                 if (register_valid && (register_rs_valid == (op ? 2'b01 : 2'b11))) begin
                     next_a = register_rs[0];
                     next_b = register_rs[1];
+                    next_pau_wait_counter  = {COUNTER_LEN{1'b0}};
                     next_state = STATE_WAITPAU;
                 end
             end
 
             STATE_WAITPAU: begin
-            
+                start = 1'b1;
+                if (pau_wait_counter < PAU_WAIT_TIME) begin
+                    next_pau_wait_counter = pau_wait_counter + 1;
+                end else if (done && pau_wait_counter == PAU_WAIT_TIME) begin
+                    next_state = STATE_DONE;
+                end
             end
+
             STATE_DONE: begin
                 result_valid = 1'b1;
                 if (result_ready) begin
