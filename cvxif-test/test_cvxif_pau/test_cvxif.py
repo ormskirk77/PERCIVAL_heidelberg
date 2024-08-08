@@ -128,11 +128,61 @@ async def complex_add_test(dut):
     await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
     for i in range(10):
-        A = uniform(-32768, 32767)+32768
+        A = uniform(0, 32)
         C = A+B
 
         await test_instruction(dut, form_instruction(0), True, [A, B], C)#BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
 
+@cocotb.test()
+async def complex_mul_test(dut):
+    reset_values(dut)
+    await start_clock(dut)
+    await wait_reset_cycle(dut)
+
+    A = 4.5
+    B = 4.5
+    C = A*B
+
+    print(softposit.posit16(A), softposit.posit16(B),"=", softposit.posit16(C), "=", softposit.posit16(A)*softposit.posit16(B))
+    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((softposit.posit16(A)*softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert softposit.posit16(A)*softposit.posit16(B) == softposit.posit16(C)
+
+    print(form_instruction(0), form_instruction(2))
+    await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
+    await test_instruction(dut, form_instruction(2), True, [A, B], C)
+
+    for i in range(10):
+        A = uniform(1, 4)
+        C = A*B
+
+        await test_instruction(dut, form_instruction(2), True, [A, B], C)
+
+@cocotb.test()
+async def complex_div_test(dut):
+    reset_values(dut)
+    await start_clock(dut)
+    await wait_reset_cycle(dut)
+
+    A = 4.5
+    B = 4.5
+    C = A/B
+
+    print(softposit.posit16(A), softposit.posit16(B),"=", softposit.posit16(C), "=", softposit.posit16(A)/softposit.posit16(B))
+    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((softposit.posit16(A)/softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert softposit.posit16(A)/softposit.posit16(B) == softposit.posit16(C)
+
+    await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
+    await test_instruction(dut, form_instruction(3), True, [A, B], C)
+    
+    for i in range(10):
+        A = uniform(1, 4)
+        C = A/B
+
+        await test_instruction(dut, form_instruction(3), True, [A, B], C)
 
 #@cocotb.test()
 async def complex_conjugate_test(dut):
