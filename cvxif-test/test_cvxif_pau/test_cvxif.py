@@ -10,10 +10,8 @@ from pathlib import Path
 import softposit
 
 
-def complex_to_32bits(value):
-    real = BinaryValue(int(value.real),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
-    imag = BinaryValue(int(value.imag),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
-    return BinaryValue(int(softposit.posit16(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)#BinaryValue(real.buff[::-1]+imag.buff[::-1])
+def posit_to_32bits(value):
+    return BinaryValue(int(value.v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
 
 
 def complex_overflow(value):
@@ -84,7 +82,7 @@ async def test_instruction(dut, instr, accepted, operands, result):
 
     # Test register interface
     dut.register_valid.value = 1
-    dut.register_rs.value = [complex_to_32bits(operands[0]), complex_to_32bits(operands[1]) if len(operands) > 1 else 0]
+    dut.register_rs.value = [posit_to_32bits(operands[0]), posit_to_32bits(operands[1]) if len(operands) > 1 else 0]
     dut.register_rs_valid.value = register_bitmask(len(operands))
     await RisingEdge(dut.clk)
     while dut.register_ready.value == 0:
@@ -103,7 +101,7 @@ async def test_instruction(dut, instr, accepted, operands, result):
         await RisingEdge(dut.clk)
 
     dut.result_ready.value = 0
-    assert dut.result_data.value == complex_to_32bits(result), f"Wrong result for {instr}: {dut.result_data.value} should be {complex_to_32bits(result)}"
+    assert dut.result_data.value == posit_to_32bits(result), f"Wrong result for {instr}: {dut.result_data.value} should be {posit_to_32bits(result)}"
 
     await FallingEdge(dut.clk)
 
@@ -114,21 +112,21 @@ async def complex_add_test(dut):
     await start_clock(dut)
     await wait_reset_cycle(dut)
 
-    A = 4.5
-    B = 4.5
-    C = 9.0
+    A = softposit.posit16(4.5)
+    B = softposit.posit16(4.5)
+    C = A+B
 
-    print(softposit.posit16(A), softposit.posit16(B), softposit.posit16(C))
-    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    assert softposit.posit16(A)+softposit.posit16(B) == softposit.posit16(C)
+    print((A), (B), (C))
+    print(BinaryValue(int((A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert (A)+(B) == (C)
 
     await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
     await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
     for i in range(10):
-        A = uniform(0, 32)
+        A = softposit.posit16(uniform(0, 32))
         C = A+B
 
         await test_instruction(dut, form_instruction(0), True, [A, B], C)#BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
@@ -139,22 +137,22 @@ async def complex_mul_test(dut):
     await start_clock(dut)
     await wait_reset_cycle(dut)
 
-    A = 4.5
-    B = 4.5
+    A = softposit.posit16(4.5)
+    B = softposit.posit16(4.5)
     C = A*B
 
-    print(softposit.posit16(A), softposit.posit16(B),"=", softposit.posit16(C), "=", softposit.posit16(A)*softposit.posit16(B))
-    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int((softposit.posit16(A)*softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    assert softposit.posit16(A)*softposit.posit16(B) == softposit.posit16(C)
+    print((A), (B),"=", (C), "=", (A)*(B))
+    print(BinaryValue(int((A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(((A)*(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert (A)*(B) == (C)
 
     print(form_instruction(0), form_instruction(2))
     await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
     await test_instruction(dut, form_instruction(2), True, [A, B], C)
 
     for i in range(10):
-        A = uniform(1, 4)
+        A = softposit.posit16(uniform(1, 4))
         C = A*B
 
         await test_instruction(dut, form_instruction(2), True, [A, B], C)
@@ -165,21 +163,21 @@ async def complex_div_test(dut):
     await start_clock(dut)
     await wait_reset_cycle(dut)
 
-    A = 4.5
-    B = 4.5
+    A = softposit.posit16(4.5)
+    B = softposit.posit16(4.5)
     C = A/B
 
-    print(softposit.posit16(A), softposit.posit16(B),"=", softposit.posit16(C), "=", softposit.posit16(A)/softposit.posit16(B))
-    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int((softposit.posit16(A)/softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    assert softposit.posit16(A)/softposit.posit16(B) == softposit.posit16(C)
+    print((A), (B),"=", (C), "=", (A)/(B))
+    print(BinaryValue(int((A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int((B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(((A)/(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert (A)/(B) == (C)
 
     await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
     await test_instruction(dut, form_instruction(3), True, [A, B], C)
     
     for i in range(10):
-        A = uniform(1, 4)
+        A = softposit.posit16(uniform(1, 4))
         C = A/B
 
         await test_instruction(dut, form_instruction(3), True, [A, B], C)
