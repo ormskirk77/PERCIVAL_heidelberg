@@ -5,7 +5,7 @@ from cocotb.clock import Clock
 from cocotb.binary import BinaryRepresentation
 from cocotb.runner import get_runner
 
-from random import randint, getrandbits
+from random import uniform, getrandbits
 from pathlib import Path
 import softposit
 
@@ -13,7 +13,7 @@ import softposit
 def complex_to_32bits(value):
     real = BinaryValue(int(value.real),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
     imag = BinaryValue(int(value.imag),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
-    return BinaryValue(int(softposit.posit32(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)#BinaryValue(real.buff[::-1]+imag.buff[::-1])
+    return BinaryValue(int(softposit.posit16(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)#BinaryValue(real.buff[::-1]+imag.buff[::-1])
 
 
 def complex_overflow(value):
@@ -118,19 +118,19 @@ async def complex_add_test(dut):
     B = 4.5
     C = 9.0
 
-    print(softposit.posit32(A), softposit.posit32(B), softposit.posit32(C))
-    print(BinaryValue(int(softposit.posit32(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit32(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit32(C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    assert softposit.posit32(A)+softposit.posit32(B) == softposit.posit32(C)
+    print(softposit.posit16(A), softposit.posit16(B), softposit.posit16(C))
+    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    print(BinaryValue(int(softposit.posit16(C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+    assert softposit.posit16(A)+softposit.posit16(B) == softposit.posit16(C)
 
     await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
     await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
-    #for i in range(1000):
-    #    A = complex(randint(-32768, 32767), randint(-32768, 32767))#
+    for i in range(10):
+        A = uniform(-32768, 32767)
 
-    #    await test_instruction(dut, form_instruction(0), True, [A, B], complex_overflow(A + B))
+        await test_instruction(dut, form_instruction(0), True, [A, B], BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
 
 
 #@cocotb.test()
