@@ -111,6 +111,8 @@ module cvxif_pau (
         next_pau_wait_counter = pau_wait_counter;
         issue_ready = 1'b0;
         issue_resp_accept = 1'b0;
+        result_valid = 1'b0;
+        start = 1'b0;
 
         case (current_state)
             STATE_IDLE: begin

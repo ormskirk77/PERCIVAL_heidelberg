@@ -128,9 +128,10 @@ async def complex_add_test(dut):
     await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
     for i in range(10):
-        A = uniform(-32768, 32767)
+        A = uniform(-32768, 32767)+32768
+        C = A+B
 
-        await test_instruction(dut, form_instruction(0), True, [A, B], BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
+        await test_instruction(dut, form_instruction(0), True, [A, B], C)#BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
 
 
 #@cocotb.test()
