@@ -43,14 +43,15 @@ module cvxif_pau (
     reg start;
     wire done_add, done_mul, done_div;
     reg [COUNTER_LEN-1:0] pau_wait_counter, next_pau_wait_counter;
-
+   reg add_i, add_z, mul_i, mul_z, div_i, div_z;
+  
     posit_add #(.N(PAU_N), .es(PAU_ES)) u_posit_add (
         .in1(a),
         .in2(b),
         .start(start),
         .out(c_add),
-        .inf(),
-        .zero(),
+      .inf(add_i),
+      .zero(add_z),
         .done(done_add));
 
     posit_mult #(.N(PAU_N), .es(PAU_ES)) u_posit_mult (
@@ -58,8 +59,8 @@ module cvxif_pau (
         .in2(b),
         .start(start),
         .out(c_mul),
-        .inf(),
-        .zero(),
+      .inf(mul_i),
+      .zero(mul_z),
         .done(done_mul));
 
     posit_div #(.N(PAU_N), .es(PAU_ES)) u_posit_div (
@@ -67,8 +68,8 @@ module cvxif_pau (
         .in2(b),
         .start(start),
         .out(c_div),
-        .inf(),
-        .zero(),
+      .inf(div_i),
+      .zero(div_z),
         .done(done_div));
 
     `include "instruction.inc"
