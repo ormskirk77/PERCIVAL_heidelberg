@@ -1,0 +1,28 @@
+
+71. Printing statistics.
+
+=== cvxif_pau ===
+
+   Number of wires:               1466
+   Number of wire bits:           1628
+   Number of public wires:          24
+   Number of public wire bits:     185
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               1502
+     $_ANDNOT_                     268
+     $_AND_                         43
+     $_DFFE_PP_                     33
+     $_DFF_P_                        4
+     $_DLATCH_N_                     1
+     $_MUX_                        468
+     $_NAND_                        44
+     $_NOR_                         54
+     $_NOT_                        192
+     $_ORNOT_                       52
+     $_OR_                         138
+     $_SDFFE_PP0P_                   2
+     $_XNOR_                        55
+     $_XOR_                        148
+

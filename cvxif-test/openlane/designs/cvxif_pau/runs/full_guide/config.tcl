@@ -267,7 +267,7 @@ set ::env(SCLPATH) "/root/.volare/sky130A/sky130_fd_sc_hd"
 set ::env(SCRIPTS_DIR) "/openlane/scripts"
 set ::env(SIGNOFF_SDC_FILE) "/openlane/designs/spm/src/spm.sdc"
 set ::env(SPEF_EXTRACTOR) "openrcx"
-set ::env(START_TIME) "2024.08.09_10.01.34"
+set ::env(START_TIME) "2024.08.09_10.56.07"
 set ::env(STA_MULTICORNER_READ_LIBS) "0"
 set ::env(STA_REPORT_POWER) "1"
 set ::env(STA_WRITE_LIB) "1"
@@ -347,13 +347,13 @@ set ::env(synthesis_logs) "/openlane/designs/cvxif_pau/runs/full_guide/logs/synt
 set ::env(synthesis_reports) "/openlane/designs/cvxif_pau/runs/full_guide/reports/synthesis"
 set ::env(synthesis_results) "/openlane/designs/cvxif_pau/runs/full_guide/results/synthesis"
 set ::env(synthesis_tmpfiles) "/openlane/designs/cvxif_pau/runs/full_guide/tmp/synthesis"
-set ::env(timer_start) "1723197694"
+set ::env(timer_start) "1723200967"
 set ::env(SYNTH_OPT) "0"
 set ::env(PL_INIT_COEFF) "0.00002"
 set ::env(PL_IO_ITER) "5"
-set ::env(CURRENT_INDEX) 34
+set ::env(CURRENT_INDEX) 33
 set ::env(CURRENT_DEF) /openlane/designs/cvxif_pau/runs/full_guide/results/routing/cvxif_pau.def
-set ::env(CURRENT_GUIDE) /openlane/designs/cvxif_pau/runs/full_guide/tmp/routing/22-global.guide
-set ::env(CURRENT_NETLIST) /openlane/designs/cvxif_pau/runs/full_guide/tmp/signoff/30-cvxif_pau.nl.v
+set ::env(CURRENT_GUIDE) /openlane/designs/cvxif_pau/runs/full_guide/tmp/routing/21-global.guide
+set ::env(CURRENT_NETLIST) /openlane/designs/cvxif_pau/runs/full_guide/tmp/signoff/29-cvxif_pau.nl.v
 set ::env(CURRENT_POWERED_NETLIST) "0"
 set ::env(CURRENT_ODB) /openlane/designs/cvxif_pau/runs/full_guide/results/routing/cvxif_pau.odb
