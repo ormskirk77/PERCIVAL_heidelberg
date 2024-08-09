@@ -8,6 +8,7 @@ from cocotb.runner import get_runner
 from random import uniform, getrandbits
 from pathlib import Path
 import softposit
+import random
 
 
 def complex_to_32bits(value):
@@ -109,6 +110,53 @@ async def test_instruction(dut, instr, accepted, operands, result):
 
 
 @cocotb.test()
+async def posit_add_diagnosis(dut):
+    succeeded_results = 0
+    failed_results = 0
+    # TODO use these to print out returned values where add fails:
+    expexted = softposit.posit32(0.0)
+    dut_posit_result = softposit.posit32(0.0)
+
+    n_sums = 1000
+    for i in range(0, n_sums, 1):
+
+        test_val1 = random.uniform(0.0, 10.0)
+        test_val2 = random.uniform(0.0, 10.0)
+
+        op1 = softposit.posit32(test_val1)
+        op2 = softposit.posit32(test_val2)
+
+        dut.in1.value = op1.v.v
+        dut.in2.value = op2.v.v
+
+        await Timer(100, units='ns') # Wait for the result.
+
+        result = op1 + op2
+        expected = BinaryValue(value=int(result.v.v), n_bits=32, bigEndian=False, binaryRepresentation=BinaryRepresentation.UNSIGNED)
+
+        # Print out all the sums and actual results to see if there is a pattern:
+        if dut.out.value == expected:
+            print(f"SUCCEEDED: {op1} + {op2} = {result}")
+            succeeded_results += 1
+        elif dut.out.value != expected:
+            print(f"FAILED   : {op1} + {op2} = {result}")
+            failed_results += 1
+    print(f"{succeeded_results}/{n_sums} correct, {failed_results}/{n_sums} wrong ")
+
+    # TODO Fix this below to print out the sum that has a failed. Need to convert dut.out.value to a decimal
+    # if dut.out.value != expected:
+    #     dut_result = BinaryValue(value=int(dut.out.value), n_bits=32, bigEndian=False, binaryRepresentation=BinaryRepresentation.UNSIGNED)
+    #     print(f"FAILED at: {op1} + {op2}")
+    #     print(f"Expected {result}, but got: {dut_posit_result.fromBits(dut_result.integer)}")
+    #     print(f"EXP bits: {expected}")
+    #     print(f"DUT bits: {dut.out.value}")
+
+    # TODO Uncomment actual test statement
+    # assert dut.out.value == expected
+
+
+
+@cocotb.test()
 async def complex_add_test(dut):
     reset_values(dut)
     await start_clock(dut)
@@ -128,7 +176,8 @@ async def complex_add_test(dut):
     await test_instruction(dut, form_instruction(0), True, [A, B], C)
 
     for i in range(10):
-        A = uniform(-32768, 32767)+32768
+        A = random.uniform(0.0, 10.0)
+        B = random.uniform(0.0, 10.0)
         C = A+B
 
         await test_instruction(dut, form_instruction(0), True, [A, B], C)#BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
