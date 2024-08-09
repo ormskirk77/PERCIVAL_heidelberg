@@ -1,0 +1,6 @@
+<< properties >>
+string FIXED_BBOX 0 0 34972 37116
+string GDS_END 4255064
+string GDS_FILE /openlane/designs/cvxif_pau/runs/full_guide/results/signoff/cvxif_pau.magic.gds
+string GDS_START 896964
+<< end >>

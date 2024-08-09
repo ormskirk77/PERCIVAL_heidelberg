@@ -1,0 +1,1 @@
+lvs {/openlane/designs/cvxif_pau/runs/full_guide/results/signoff/cvxif_pau.spice cvxif_pau} {/openlane/designs/cvxif_pau/runs/full_guide/tmp/signoff/30-cvxif_pau.pnl.v cvxif_pau} /root/.volare/sky130A/libs.tech/netgen/sky130A_setup.tcl /openlane/designs/cvxif_pau/runs/full_guide/logs/signoff/33-cvxif_pau.lef.lvs.log -json

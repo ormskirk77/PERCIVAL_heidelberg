@@ -1,0 +1,29 @@
+{
+    "//": "Basics",
+    "DESIGN_NAME": "cvxif_pau",
+    "VERILOG_FILES": "dir::src/*.*",
+    "CLOCK_PERIOD": 10,
+    "CLOCK_PORT": "clk",
+    "PNR_SDC_FILE": "/openlane/designs/spm/src/spm.sdc",
+    "SIGNOFF_SDC_FILE": "/openlane/designs/spm/src/spm.sdc",
+    "//": "PDN",
+    "FP_PDN_CORE_RING": true,
+    "FP_PDN_VOFFSET": 5,
+    "FP_PDN_HOFFSET": 5,
+    "FP_PDN_VWIDTH": 2,
+    "FP_PDN_HWIDTH": 2,
+    "FP_PDN_VPITCH": 30,
+    "FP_PDN_HPITCH": 30,
+    "FP_PDN_SKIPTRIM": true,
+    "//": "Technology-Specific Configs",
+    "pdk::sky130*": {
+        "FP_CORE_UTIL": 45,
+        "CLOCK_PERIOD": 10,
+        "scl::sky130_fd_sc_hs": {
+            "CLOCK_PERIOD": 8
+        },
+        "scl::sky130_fd_sc_ls": {
+            "MAX_FANOUT_CONSTRAINT": 5
+        }
+    }
+}

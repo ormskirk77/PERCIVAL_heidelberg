@@ -1,0 +1,26 @@
+
+77. Printing statistics.
+
+=== cvxif_pau ===
+
+   Number of wires:               1506
+   Number of wire bits:           1668
+   Number of public wires:          24
+   Number of public wire bits:     185
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               1539
+     $_ANDNOT_                     268
+     $_AND_                         43
+     $_MUX_                        505
+     $_NAND_                        44
+     $_NOR_                         54
+     $_NOT_                        192
+     $_ORNOT_                       52
+     $_OR_                         138
+     $_XNOR_                        55
+     $_XOR_                        148
+     sky130_fd_sc_hd__dfxtp_2       39
+     sky130_fd_sc_hd__dlxtn_1        1
+
