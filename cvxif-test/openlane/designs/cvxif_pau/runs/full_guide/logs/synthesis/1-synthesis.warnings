@@ -1,0 +1,8 @@
+Warning: Resizing cell port $paramod$3577d9ae3c9b73f357e25bd84ec5a3070f934580\posit_mult.uut_reg_ro.exp_o from 7 bits to 6 bits.
+Warning: Resizing cell port $paramod$3577d9ae3c9b73f357e25bd84ec5a3070f934580\posit_mult.uut_reg_ro.r_o from 5 bits to 4 bits.
+Warning: Resizing cell port $paramod$3577d9ae3c9b73f357e25bd84ec5a3070f934580\posit_div.uut_reg_ro.exp_o from 7 bits to 6 bits.
+Warning: Resizing cell port $paramod$3577d9ae3c9b73f357e25bd84ec5a3070f934580\posit_div.uut_reg_ro.r_o from 5 bits to 4 bits.
+Warning: multiple conflicting drivers for cvxif_pau.\done:
+Warning: Wire cvxif_pau.\register_ready is used but has no driver.
+ABC: Warning: Detected 2 multi-output gates (for example, "sky130_fd_sc_hd__fa_1").
+Warnings: 6 unique messages, 6 total

@@ -1,1 +1,1 @@
-/openlane/designs/cvxif_pau/src/cvxif_pau.sv:29: ERROR: syntax error, unexpected '[', expecting ',' or '=' or ')'
+ABC: Error: The network is combinational.

@@ -26,7 +26,8 @@ module cvxif_pau (
     output reg [1:0]  issue_resp_register_read,
     input         register_valid,
     output        register_ready,
-    input [31:0]  register_rs [0:1],
+    input [31:0]  register_rs0,
+    input [31:0]  register_rs1,
     input [1:0]   register_rs_valid,
     output reg    result_valid,
     input         result_ready,
@@ -127,8 +128,8 @@ module cvxif_pau (
 
             STATE_WAITREGS: begin
                 if (register_valid && (register_rs_valid == (op ? 2'b01 : 2'b11))) begin
-                    next_a = register_rs[0];
-                    next_b = register_rs[1];
+                    next_a = register_rs0[PAU_N-1:0];
+                    next_b = register_rs1[PAU_N-1:0];
                     next_pau_wait_counter  = {COUNTER_LEN{1'b0}};
                     next_state = STATE_WAITPAU;
                 end
