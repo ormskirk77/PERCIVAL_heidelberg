@@ -1,8 +1,24 @@
-// Source: https://github.com/manish-kj/PACoGen/blob/master/mult/posit_mult.v
 
-`timescale 1ns / 1ps
 //(* use_dsp = "no" *)
+
+module reg_exp_op_mul (exp_o, e_o, r_o);
+parameter es=3;
+parameter Bs=5;
+input [es+Bs+1:0] exp_o;
+output [es-1:0] e_o;
+output [Bs:0] r_o;
+
+assign e_o = exp_o[es-1:0];
+
+wire [es+Bs:0] exp_oN_tmp;
+conv_2c #(.N(es+Bs)) uut_conv_2c1 (~exp_o[es+Bs:0],exp_oN_tmp);
+wire [es+Bs:0] exp_oN = exp_o[es+Bs+1] ? exp_oN_tmp[es+Bs:0] : exp_o[es+Bs:0];
+
+assign r_o = (~exp_o[es+Bs+1] || |(exp_oN[es-1:0])) ? exp_oN[es+Bs:es] + 1 : exp_oN[es+Bs:es];
+endmodule : reg_exp_op_mul
+
 module posit_mult(in1, in2, start, out, inf, zero, done);
+`include "/home/tim/PycharmProjects/PERCIVAL_heidelberg/postGermany/src/helper_functions.v"
 
 function [31:0] log2;
 input reg [31:0] value;
@@ -14,11 +30,11 @@ input reg [31:0] value;
 endfunction
 
 parameter N = 16;
-parameter Bs = log2(N); 
+parameter Bs = log2(N);
 parameter es = 3;
 
 input [N-1:0] in1, in2;
-input start; 
+input start;
 output [N-1:0] out;
 output inf, zero;
 output done;
@@ -45,7 +61,7 @@ wire [N-1:0] xin2 = s2 ? -in2 : in2;
 data_extract_v1 #(.N(N),.es(es)) uut_de1(.in(xin1), .rc(rc1), .regime(regime1), .exp(e1), .mant(mant1));
 data_extract_v1 #(.N(N),.es(es)) uut_de2(.in(xin2), .rc(rc2), .regime(regime2), .exp(e2), .mant(mant2));
 
-wire [N-es:0] m1 = {zero_tmp1,mant1}, 
+wire [N-es:0] m1 = {zero_tmp1,mant1},
 	m2 = {zero_tmp2,mant2};
 
 //Sign, Exponent and Mantissa Computation
@@ -63,10 +79,10 @@ add_N_Cin #(.N(Bs+es+1)) uut_add_exp ({r1,e1}, {r2,e2}, mult_m_ovf, mult_e);
 //Exponent and Regime Computation
 wire [es-1:0] e_o;
 wire [Bs:0] r_o;
-reg_exp_op #(.es(es), .Bs(Bs)) uut_reg_ro (mult_e[es+Bs+1:0], e_o, r_o);
+reg_exp_op_mul #(.es(es), .Bs(Bs)) uut_reg_ro (mult_e[es+Bs+1:0], e_o, r_o);
 
 //Exponent, Mantissa and GRS Packing
-wire [2*N-1+3:0]tmp_o = {{N{~mult_e[es+Bs+1]}},mult_e[es+Bs+1],e_o,mult_mN[2*(N-es):2*(N-es)-(N-es-1)+1], mult_mN[2*(N-es)-(N-es-1):2*(N-es)-(N-es-1)-1], |mult_mN[2*(N-es)-(N-es-1)-2:0] }; 
+wire [2*N-1+3:0]tmp_o = {{N{~mult_e[es+Bs+1]}},mult_e[es+Bs+1],e_o,mult_mN[2*(N-es):2*(N-es)-(N-es-1)+1], mult_mN[2*(N-es)-(N-es-1):2*(N-es)-(N-es-1)-1], |mult_mN[2*(N-es)-(N-es-1)-2:0] };
 
 
 //Including Regime bits in Exponent-Mantissa Packing
@@ -89,3 +105,5 @@ assign out = inf|zero|(~mult_mN[2*(N-es)+1]) ? {inf,{N-1{1'b0}}} : {mult_s, tmp1
 	done = start0;
 
 endmodule
+
+

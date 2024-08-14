@@ -1,9 +1,23 @@
-// Source: https://github.com/manish-kj/PACoGen/blob/master/div/posit_div.v
 
-`timescale 1ns / 1ps
+module reg_exp_op_div (exp_o, e_o, r_o);
+parameter es=3;
+parameter Bs=5;
+input [es+Bs+1:0] exp_o;
+output [es-1:0] e_o;
+output [Bs:0] r_o;
 
-//(* use_dsp = "no" *)
+assign e_o = exp_o[es-1:0];
+
+wire [es+Bs:0] exp_oN_tmp;
+conv_2c #(.N(es+Bs)) uut_conv_2c1 (~exp_o[es+Bs:0],exp_oN_tmp);
+wire [es+Bs:0] exp_oN = exp_o[es+Bs+1] ? exp_oN_tmp[es+Bs:0] : exp_o[es+Bs:0];
+
+assign r_o = (~exp_o[es+Bs+1] || |(exp_oN[es-1:0])) ? exp_oN[es+Bs:es] + 1 : exp_oN[es+Bs:es];
+endmodule : reg_exp_op_div
+
 module posit_div(in1, in2, start, out, inf, zero, done);
+`include "/home/tim/PycharmProjects/PERCIVAL_heidelberg/postGermany/src/helper_functions.v"
+
 function [31:0] log2;
 input reg [31:0] value;
 	begin
@@ -12,21 +26,26 @@ input reg [31:0] value;
         	value = value>>1;
       	end
 endfunction
+//
+// Changed:
+//   N     from 16 -> 32
+//   es     from 3 -> 2
+//   AW_MAX from 8 -> 16
+//
 
-parameter N = 16;
-parameter Bs = log2(N); 
-parameter es = 3;
+parameter N = 32;
+parameter Bs = log2(N);
+parameter es = 2;
 parameter NR_Iter = 1;							// 2 for 32 bits, 1 for 16 bits, 0 for 8bits
 parameter NRB = 2**NR_Iter;
 parameter M = N-es;
 parameter IW_MAX = 8;							//Max intial approximation storage bit-width
-parameter IW = (NRB == 1 ) ? M : (M/NRB + ((M%NRB > 0) ? 1 : 0));	//(must be <= IW_MAX) 1/4th width of Mantissa: inverse width to be used in NR iterations multiplication 
-parameter AW_MAX = 8;							//Max Address width of the intial approximation storage
+parameter IW = (NRB == 1 ) ? M : (M/NRB + ((M%NRB > 0) ? 1 : 0));	//(must be <= IW_MAX) 1/4th width of Mantissa: inverse width to be used in NR iterations multiplication
+parameter AW_MAX = 16;							//Max Address width of the intial approximation storage
 parameter AW = (NRB == 1) ? M : (M/NRB + ((M%NRB > 0) ? 1 : 0));	//Actual address width used for initial approximation (AW must be <= AW_MAX)
 
-
 input [N-1:0] in1, in2;
-input start; 
+input start;
 output [N-1:0] out;
 output inf, zero;
 output done;
@@ -53,7 +72,7 @@ wire [N-1:0] xin2 = s2 ? -in2 : in2;
 data_extract_v1 #(.N(N),.es(es)) uut_de1(.in(xin1), .rc(rc1), .regime(regime1), .exp(e1), .mant(mant1));
 data_extract_v1 #(.N(N),.es(es)) uut_de2(.in(xin2), .rc(rc2), .regime(regime2), .exp(e2), .mant(mant2));
 
-wire [M:0] m1 = {zero_tmp1,mant1}, 
+wire [M:0] m1 = {zero_tmp1,mant1},
 	m2 = {zero_tmp2,mant2};
 
 //Sign, Exponent and Mantissa Computation
@@ -78,7 +97,7 @@ assign m2_inv0 = m2_inv0_tmp[IW_MAX:IW_MAX-IW];
 
 wire [2*M+1:0] div_m;
 genvar i;
-generate 
+generate
 	wire [2*M+1:0] m2_inv [NR_Iter:0];
 
 	if (NR_Iter > 0) begin
@@ -108,7 +127,7 @@ sub_N_Bin #(.N(Bs+es+1)) uut_div_e ({r1,e1}, {r2,e2}, bin, div_e);
 
 wire [es-1:0] e_o;
 wire [Bs:0] r_o;
-reg_exp_op #(.es(es), .Bs(Bs)) uut_reg_ro (div_e[es+Bs+1:0], e_o, r_o);
+reg_exp_op_div #(.es(es), .Bs(Bs)) uut_reg_ro (div_e[es+Bs+1:0], e_o, r_o);
 
 //Exponent and Mantissa Packing
 wire [2*N-1+3:0]tmp_o = {{N{~div_e[es+Bs+1]}},div_e[es+Bs+1],e_o,div_mN[2*M:2*M-(N-es-1)+1], div_mN[2*M-(N-es-1):2*M-(N-es-1)-1],|div_mN[2*M-(N-es-1)-2:0] };
@@ -134,4 +153,4 @@ wire [N-1:0] tmp1_oN = div_s ? -tmp1_o_rnd : tmp1_o_rnd;
 assign out = inf|zero|(~div_mN[2*M+1]) ? {inf,{N-1{1'b0}}} : {div_s, tmp1_oN[N-1:1]},
 	done = start0;
 
-endmodule
+endmodule : posit_div

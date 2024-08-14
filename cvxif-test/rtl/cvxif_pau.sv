@@ -33,7 +33,7 @@ module cvxif_pau (
     output reg [31:0] result_data
 );
 
-    `include "pau.inc"
+    `include "/home/tim/PycharmProjects/PERCIVAL_heidelberg/cvxif-test/rtl/include/pau.inc"
     reg [2:0] op, next_op;
     reg [PAU_N-1:0] a, b, next_a, next_b;
     //reg [PAU_N-1:0] c;
@@ -69,7 +69,7 @@ module cvxif_pau (
         .zero(),
         .done(done_div));
 
-    `include "instruction.inc"
+    `include "/home/tim/PycharmProjects/PERCIVAL_heidelberg/cvxif-test/rtl/include/instruction.inc"
     logic match_instruction;
     assign match_instruction = (issue_req_instr[6:0] == 7'b1111011) &&
                                 (issue_req_instr[31:25] == 7'b0) &&

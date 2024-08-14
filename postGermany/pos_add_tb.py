@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='_pytest.assertion.rewrite|cocotb.runner|get_runner')
+
 import cocotb
 from cocotb.binary import BinaryValue
 from cocotb.triggers import Timer, RisingEdge, FallingEdge
@@ -7,30 +10,15 @@ from cocotb.runner import get_runner
 
 from random import uniform, getrandbits, randint
 from pathlib import Path
-import softposit
+import softposit, random
 
-import pydevd_pycharm
-pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
+# import pydevd_pycharm
+# pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
 
-def complex_to_32bits(value):
-    real = BinaryValue(int(value.real),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
-    imag = BinaryValue(int(value.imag),n_bits=16,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
-    return BinaryValue(int(softposit.posit16(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)#BinaryValue(real.buff[::-1]+imag.buff[::-1])
+def convert_to_binaryValue(value):
 
 
-def complex_overflow(value):
-    real = value.real
-    imag = value.imag
-    if real < -32768:
-        real += 65536
-    if real > 32767:
-        real -= 65536
-    if imag < -32768:
-        imag += 65536
-    if imag > 32767:
-        imag -= 65536
-    return complex(real, imag)
-
+    return BinaryValue(int(softposit.posit32(value).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED)
 
 def form_instruction(op):
     instr = BinaryValue(n_bits=32,bigEndian=False)
@@ -86,7 +74,7 @@ async def test_instruction(dut, instr, accepted, operands, result):
 
     # Test register interface
     dut.register_valid.value = 1
-    dut.register_rs.value = [complex_to_32bits(operands[0]), complex_to_32bits(operands[1]) if len(operands) > 1 else 0]
+    dut.register_rs.value = [convert_to_binaryValue(operands[0]), convert_to_binaryValue(operands[1]) if len(operands) > 1 else 0]
     dut.register_rs_valid.value = register_bitmask(len(operands))
     await RisingEdge(dut.clk)
     while dut.register_ready.value == 0:
@@ -103,63 +91,67 @@ async def test_instruction(dut, instr, accepted, operands, result):
     while dut.result_ready.value == 0 or dut.result_valid.value == 0:
         dut.result_ready.value = getrandbits(1)
         await RisingEdge(dut.clk)
-
+    await Timer(100, units='ns')
     dut.result_ready.value = 0
-    assert dut.result_data.value == complex_to_32bits(result), f"Wrong result for {instr}: {dut.result_data.value} should be {complex_to_32bits(result)}"
+    assert dut.result_data.value == convert_to_binaryValue(result), f"Wrong result for {instr}: {dut.result_data.value} should be {convert_to_binaryValue(result)}"
 
     await FallingEdge(dut.clk)
 
+'''
+localparam ADD_OP = 3'b00;
+localparam SUB_OP = 3'b01;
+localparam MUL_OP = 3'b10;
+localparam DIV_OP = 3'b11;
+'''
+ADD_OP = 0
+SUB_OP = 1
+MUL_OP = 2
+DIV_OP = 3
 
 @cocotb.test()
-async def complex_add_test(dut):
+async def mul_test(dut):
     reset_values(dut)
     await start_clock(dut)
     await wait_reset_cycle(dut)
-
-    A = 4.5
-    B = 4.5
+    A = 3
+    B = 3
     C = 9.0
+    await test_instruction(dut, form_instruction(MUL_OP), True, [A, B], C)
 
-    print(softposit.posit16(A), softposit.posit16(B), softposit.posit16(C))
-    print(BinaryValue(int(softposit.posit16(A).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(B).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    print(BinaryValue(int(softposit.posit16(C).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-    assert softposit.posit16(A)+softposit.posit16(B) == softposit.posit16(C)
+@cocotb.test()
+async def div_test(dut):
+    reset_values(dut)
+    await start_clock(dut)
+    await wait_reset_cycle(dut)
+    A = 4
+    B = 2
+    C = 2
+    await test_instruction(dut, form_instruction(DIV_OP), True, [A, B], C)
 
-    await test_instruction(dut, 0xdeadbeef, False, [A, B], C)
-    await test_instruction(dut, form_instruction(0), True, [A, B], C)
-
-    for i in range(10):
-        A = uniform(-32768, 32767)+32768
-        C = A+B
-
-        await test_instruction(dut, form_instruction(0), True, [A, B], C)#BinaryValue(int((softposit.posit16(A)+softposit.posit16(B)).v.v),n_bits=32,bigEndian=False,binaryRepresentation=BinaryRepresentation.UNSIGNED))
-
-
-#@cocotb.test()
-async def complex_conjugate_test(dut):
+@cocotb.test()
+async def add_test(dut):
     reset_values(dut)
     await start_clock(dut)
     await wait_reset_cycle(dut)
 
-    A = 1 - 2j
+    n_sums = 2
+    for i in range(0, n_sums):
 
-    await test_instruction(dut, 0xdeadbeef, False, [A], A.conjugate())
-    await test_instruction(dut, form_instruction(1), True, [A], A.conjugate())
+        test_val1 = random.uniform(0.0, 10.0)
+        test_val2 = random.uniform(0.0, 10.0)
 
-    for i in range(1000):
-        A = complex(randint(-32768, 32767), randint(-32768, 32767))
+        await Timer(100, units='ns')
 
-        await test_instruction(dut, form_instruction(1), True, [A], A.conjugate())
+        await test_instruction(dut, form_instruction(ADD_OP), True, [test_val1, test_val2], (test_val1 + test_val2))
+
+
+
 
 def test_cvxif_runner():
     proj_path = Path(__file__).resolve().parent.parent
+    sources = list(proj_path.glob("postGermany/src/*.*"))
 
-    # sources = [proj_path / "rtl" / "complex.sv", proj_path / "rtl" / "cvxif_complex.sv"]
-    # hdl_tl = "cvxif_complex"
-
-    sources = [proj_path / "rtl" / "complex.sv", proj_path / "rtl" / "cvxif_pau.sv"]
-    hdl_tl = "cvxif_pau"
+    hdl_tl = "pau"
 
     runner = get_runner("icarus")
     runner.build(
@@ -169,7 +161,7 @@ def test_cvxif_runner():
         build_args=[],
     )
     runner.test(
-        hdl_toplevel=hdl_tl, test_module="test_cvxif", test_args=[]
+        hdl_toplevel=hdl_tl, test_module="pos_add_tb", test_args=[]
     )
 
 

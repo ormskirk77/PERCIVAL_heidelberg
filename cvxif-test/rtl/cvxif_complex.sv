@@ -37,7 +37,7 @@ module cvxif_complex (
     reg [31:0] a, b, next_a, next_b;
     wire [31:0] c;
 
-    `include "instruction.inc"
+    `include "/home/tim/PycharmProjects/PERCIVAL_heidelberg/cvxif-test/rtl/include/instruction.inc"
     complex u_complex (
         .op(op),
         .a(a),
